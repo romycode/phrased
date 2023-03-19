@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/romycode/phrased/pkg/encode"
+	"github.com/romycode/phrased/internal/encode"
 )
 
 type AesCipher struct {

@@ -1,0 +1,247 @@
+<html lang="en">
+<head>
+    <title> chat </title>
+    <style lang="text/css">
+        :root {
+            --chat-box--height: 90%;
+            --bg0_h: #1d2021;
+            --bg2: #504945;
+            --bg4: #282828;
+            --gray: #928374;
+            --fg: #fbf1c7;
+            --green: #98971a;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: var(--bg0_h);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            background-color: var(--bg0_h);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--bg4);
+            border: 0;
+        }
+
+        * {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+            background-color: transparent;
+            color: var(--fg);
+            outline: none;
+            font-family: 'JetBrains Mono', sans-serif;
+            font-size: 10pt;
+            scrollbar-width: thin;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+
+            background-color: var(--bg0_h);
+        }
+
+        .join-box {
+            width: 100%;
+            height: 90%;
+            margin: auto 0;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            width: 70%;
+            height: 90%;
+            margin: auto;
+            border: 1px var(--bg2) solid;
+        }
+
+        .chat-box__header {
+            display: flex;
+            flex-direction: row;
+            height: calc((100% - var(--chat-box--height)) / 2);
+        }
+
+        .chat-box__header__item {
+            display: flex;
+            flex-direction: row;
+            height: auto;
+            width: auto;
+            border: 0;
+            text-align: center;
+            vertical-align: center;
+        }
+
+        .chat-box__header__item#receiver,
+        .chat-box__header__item#user {
+            width: 50%;
+            height: 100%;
+            margin: auto 0 auto 0;
+            border: 0;
+            border-right: 1px var(--bg2) solid;
+        }
+
+        .chat-box__body {
+            height: var(--chat-box--height);
+            border: 1px var(--bg2) solid;
+            border-left: 0;
+            border-right: 0;
+            overflow: auto;
+        }
+
+        .chat-box__body__message {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: auto;
+            padding: 0.25rem;
+            border-bottom: 1px var(--bg2) solid;
+        }
+
+        .chat-box__footer {
+            display: flex;
+            flex-direction: row;
+            height: calc((100% - var(--chat-box--height)) / 2);
+            justify-content: space-evenly;
+        }
+
+        .chat-box__footer__input {
+            width: 85%;
+            height: 100%;
+            padding: 0 1rem;
+            border: 0 !important;
+            border-right: 1px var(--bg2) solid !important;
+        }
+
+        .chat-box__footer__send {
+            width: 15%;
+            height: 100%;
+            margin: 0 auto;
+            border: 0 !important;
+        }
+
+        .chat-box__footer__send:hover {
+            cursor: pointer;
+        }
+
+        .input {
+            border-style: solid;
+            border-radius: 0;
+            border-color: var(--bg2);
+            border-width: 1px;
+            background-color: var(--bg4);
+        }
+
+        .input::placeholder {
+            opacity: 0.5;
+            color: var(--fg);
+        }
+
+        .button {
+            border: solid var(--bg2) 2px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            border-radius: 1px;
+            transition: 250ms;
+            transform: translateY(0);
+            text-transform: uppercase;
+        }
+
+        .button:hover {
+            transition: 250ms;
+            background-color: var(--green);
+            color: var(--bg0_h);
+            border: solid 2px var(--bg2);
+        }
+
+        .label {
+            display: none;
+        }
+
+        .text {
+            margin: auto;
+            border: 0;
+            width: auto;
+            height: auto;
+        }
+
+        .dest {
+            position: sticky;
+            display: flex;
+            width: 100%;
+            height: 42px;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <div class="dest">
+        <label for="dest">DESTINATARIO</label>
+        <input id="dest" type="text" class="input">
+    </div>
+    <div class="chat-box">
+        <div class="chat-box__header">
+<!--            <button class="button chat-box__footer__send" onclick="userJoin()">CONNECT</button>-->
+        </div>
+        <div class="chat-box__body"></div>
+        <div class="chat-box__footer">
+            <label class="label" for="message"></label>
+            <input class="input chat-box__footer__input"
+                   placeholder="type message here ..."
+                   id="message"
+                   name="message"
+                   type="text"/>
+            <button class="button chat-box__footer__send" onclick="send()">SEND</button>
+        </div>
+    </div>
+    <script lang="js">
+        let USER;
+        const ws = new WebSocket("wss://localhost/v1/chat/ws")
+
+        ws.onopen = () => console.info("Websocket Opened!")
+        ws.onclose = () => console.info("Websocket Closed!")
+        ws.onerror = (ev) => console.error(ev)
+        ws.onmessage = (ev) => {
+            const data = JSON.parse(ev.data)
+            console.info("++ RECEIVED ------")
+            console.info(data)
+            console.info("-- RECEIVED ------")
+
+            const messages = document.querySelector("div.chat-box__body")
+            switch (data.kind) {
+                case 'user_login':
+                    const userInfoBox = document.querySelector("div#user")
+                    userInfoBox.innerHTML += `<div class="text">ID: ${data.content}</div>`
+                    USER = data.content
+                    break
+                case 'user_join':
+                    alert(`Connected to user: ${data.content}`)
+                    break
+                case 'text_message':
+                    const msg = JSON.parse(data.content)
+                    messages.innerHTML += `<div class="chat-box__body__message">> ${msg.src}:<br/>${msg.content}</div>`
+                    break
+                case 'echo_message':
+                    messages.innerHTML += `<div class="chat-box__body__message">> SERVER ECHO:<br/>${data.content}</div>`
+                    break
+                case 'message':
+                    console.info(ev)
+                    break
+                default:
+                    console.info("Unknown message type: " + ev.data)
+            }
+        }
+
+        function send() {
+
+        }
+    </script>
+</main>
+</body>
+</html>

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/romycode/phrased/pkg/encode"
+	"github.com/romycode/phrased/internal/encode"
 )
 
 func TestNewAesCipher(t *testing.T) {
